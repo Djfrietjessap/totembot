@@ -1,0 +1,513 @@
+import discord
+from discord.utils import get
+from discord.ext import commands
+import numpy as np
+import re
+import matplotlib.pyplot as plt
+from gtts import gTTS
+import discord
+import random
+import math
+import csv
+import requests
+import urllib
+import requests
+from bs4 import BeautifulSoup
+import urllib.request
+import bs4 as bs
+import sys
+import spotipy
+import spotipy.util as util
+import wikipedia
+from discord.utils import get
+import operator
+#test
+intents = discord.Intents.all()
+client = commands.Bot(command_prefix= '!', intents=intents)
+
+
+
+cient_id =   'id'
+client_secret = 'secret'
+
+
+username = "tobi_one_spotify"
+playlist_id = "spotify:playlist:68K7WQCSSyfhFQz0IWCXCz"
+track_ids = "spotify:track:49X0LAl6faAusYq02PRAY6"
+
+
+scope = 'playlist-modify-public'
+
+
+
+@client.event
+async def on_ready():
+    print('My bot is ready')
+    #await client.change_presence(activity=discord.Activity(type=discorddis.ActivityType.watching, name="naar totems aan het zoeken"))
+
+
+
+@client.event
+async def on_member_join(member):
+    id = client.get_channel(782193932858818563)
+
+    text_channel_list = []
+    for guild in client.guilds:
+        for channel in guild.text_channels:
+            text_channel_list.append(channel.name.lower())
+    print(member)
+    channel = client.get_channel(782193932858818563)
+    await channel.send("Hallo " + member.mention + "\n" + "typ !ikbeneen *je-totem*" + "\n" + "bv" + "\n" + "!ikbeneen beer"+ "\n" + "om je totemgenoten te vinden"
+                  )
+
+    for channel in member.guild.channels:
+        print()
+        #print(str(channel) )
+        if str(channel.name) == "algemeen":  # We check to make sure we are sending the message in the general channel
+            await channel.send_message("Hallo", member,
+                       'zou je "!ikbeneen jetotem" willen typpen, bv in het geval dat je een beer bent "!ikbeneen beer", \n hierdoor ontstaan er op de linker zijde chats voor jouw totem, en krijg je de rol van jouw totem.\n Verder kan je nog gebruik maken van "!totem jouwtotem" om jouw totem beschrijving op te vragen. \n Dan wens ik je nog veel succes op het vinden van jouw totem-genoten\n met vriendenlijke groeten Totembot')
+
+
+@client.command()
+async def totem(ctx, totem): # geeft de totem van iemand weer
+    try:
+        source = urllib.request.urlopen("https://www.scoutsengidsenvlaanderen"
+                                        ""
+                                        ".be/totem/"+ totem )
+        print(source)
+        soup = bs.BeautifulSoup(source, 'lxml')
+        await ctx.send("".join(list(soup.find_all('p')[0])))
+        await ctx.send("bron:"+ "https://www.scoutsengidsenvlaanderen.be/totem/"+ totem  )
+
+    except:
+        await ctx.send("u heeft de totem fout geschreven, of de totem staat niet op https://www.scoutsengidsenvlaanderen.be/totem/ " )
+
+
+@client.command()
+async def kaart(ctx,*,plaats): # geeft de totem van iemand weer
+    f = open("kaart.csv", "a+")
+    f.writelines("\n"+plaats)
+    f.close()
+    await ctx.send("uw scouts wordt later toegevoegd aan de kaart")
+    await ctx.send("https://www.google.com/maps/d/u/0/edit?mid=1LYEptv5nZi2DlaqL1AGQSchL5aF556wk&ll=51.120594319436165%2C4.237395641816688&z=9")
+
+@client.command(pass_context=True)
+async def add(ctx, totem):
+    util.prompt_for_user_token(username,
+                               scope,
+                               client_id=cient_id,
+                               client_secret=client_secret,
+                               redirect_uri= "http://localhost:8080")
+
+    token = util.prompt_for_user_token(username, scope)
+    print(token)
+    if token:
+        sp = spotipy.Spotify(auth=token)
+        sp.trace = False
+        results = sp.user_playlist_add_tracks(username, playlist_id, track_ids)
+        print(results)
+    else:
+        print("Can't get token for", username)
+
+    await ctx.send("het is toegevoegd")
+
+@client.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def delrole(ctx, name):
+    role = discord.utils.get(ctx.guild.roles, name=name)
+    await role.delete()
+
+@client.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def maak(ctx,*, name):
+    guild = ctx.message.guild
+    channel = await guild.create_text_channel(name)
+    voicechannel = await guild.create_voice_channel(name)
+
+
+
+
+@client.command(pass_context=True,aliases=['ikben', "ik" ])
+ # This must be exactly the name of the appropriate role
+async def ikbeneen(ctx,*,totem):
+    try:
+        if totem == "BOT" or totem == "Totembot" or totem == "admin" or totem == "Totembot 2":
+            await ctx.send("nice try om de role van bot te krijgen en hiermee on de admin rights")
+            return None
+        user = ctx.message.author
+        totem = totem.lower()
+        guild = ctx.guild
+        dietotemiseral = False
+        lijst_lijst_van_al_de_totems = []
+        for m in guild.members:
+            # print(guild.members)
+            # print(ctx.guild.members)
+            for member_role in m.roles:
+                if member_role.name == totem:
+                    print(m)
+                    await m.send(
+                        user.name + " heeft dezelfde totem als jou en heeft de totemserver gejoind, ga dag zeggen")
+                    lijst_lijst_van_al_de_totems.append(member_role)
+                    dietotemiseral = True
+        if dietotemiseral:
+            for role_man in lijst_lijst_van_al_de_totems:
+                await user.add_roles(role_man)
+                role = role_man
+
+        else:
+            await guild.create_role(name=totem)
+            role = discord.utils.get(ctx.guild.roles, name=totem)
+
+            await user.add_roles(role)
+        url = ctx.author.avatar_url
+
+        text_channel_list = []
+        for guild in client.guilds:
+            for channel in guild.text_channels:
+                text_channel_list.append(channel.name.lower())
+        if totem not in text_channel_list:
+            guild = ctx.message.guild
+
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.me: discord.PermissionOverwrite(read_messages=True),
+                role: discord.PermissionOverwrite(read_messages=True)}
+
+            ##voicechannel = await guild.create_voice_channel(totem,overwrites=overwrites)
+            voicechannel = await guild.create_text_channel(totem, overwrites=overwrites)
+
+        await user.edit(nick=totem)
+        await ctx.send(
+            f'uw bijnaam is veranderd naar ' + totem + "\n" + "wilt u een voortotem, gebruik dan het comando '!voortotem *hier uw voortotem*'")
+
+        guild = client.get_guild(ctx.guild.id)
+        erzijnaltotems = False
+        await ctx.send("\n\n en")
+        for m in guild.members:
+            # print(guild.members)
+            # print(ctx.guild.members)
+            for member_role in m.roles:
+                if member_role.name == totem:
+                    if m.name != user.name:
+                        await ctx.send(
+                            m.name + " heeft ook die totem, zeg hem\haar eens gedag!\n (gebruik de zoekbalk rechtsboven\n of via jouw totem chat die links boven staat )")
+                        erzijnaltotems = True
+
+        if erzijnaltotems == False:
+            await ctx.send(
+                "er is nog niemand buiten jij met deze totem in de server, misschien joinen er mensen later met jouw  totem\n maar je krijgt een melding als iemand met jouw totem joint")
+
+    except:
+        user = ctx.message.author
+        await user.edit(nick=totem)
+        role_pop = get(guild.roles, id= 783410207837257771 )
+
+        await ctx.send("uw naam is veranderd naar "+ totem + "\n" + "gebruik !voortotem *je-totem*")
+
+
+        await user.add_roles(role_pop)
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            guild.me: discord.PermissionOverwrite(read_messages=True),
+            role_pop: discord.PermissionOverwrite(read_messages=True)}
+
+        ##voicechannel = await guild.create_voice_channel(totem,overwrites=overwrites)
+        voicechannel = await guild.create_text_channel(totem, overwrites=overwrites)
+
+
+
+@client.command(pass_context=True, aliases=['Voortotem'])
+async def voortotem(ctx,*, voortem):
+    user = ctx.message.author
+    totaletotem = user.nick
+    await user.edit(nick=voortem +" "+ totaletotem)
+    await ctx.send(
+        f'uw bijnaam is veranderd naar: ' + voortem +" "+ totaletotem)
+
+    await ctx.send(
+       "wilt u uw gouw toevoegen gebruik !gouw *jouw-gouw*")
+
+
+@client.command(pass_context=True)
+async def naamtotem(ctx,*, totem):
+    user = ctx.message.author
+
+    await user.edit(nick=totem)
+
+@client.command(pass_context=True)
+@commands.has_permissions(administrator=True)
+async def set(ctx):
+    print("hier")
+    guild = client.get_guild(ctx.guild.id)
+    for m in guild.members:
+        #print(guild.members)
+        #print(ctx.guild.members)
+        for member_role in m.roles:
+            for role in ctx.guild.roles:
+                print(role.name + member_role.name)
+
+                if role.name == member_role.name and role.name != "@everyone" and role.name != "Totembot" :
+                    print("dit gebeurd \n\n")
+                    await m.add_roles(role)
+
+
+@client.command(pass_context=True)
+async def iedereenmettotem(ctx,*,totem):
+    print("hier")
+    guild = client.get_guild(ctx.guild.id)
+    for m in guild.members:
+        #print(guild.members)
+        #print(ctx.guild.members)
+        for member_role in m.roles:
+                if member_role.name == totem:
+                    await ctx.send(m.name + " heeft ook die totem, zeg hem eens gedag!")
+
+
+
+@client.command()
+async def kampvuur(ctx): # laat de bot het voice channel joinen
+    global voice
+    channel = ctx.message.author.voice.channel
+    voice = get(client.voice_clients, guild=ctx.guild)
+
+    if voice and voice.is_connected():
+        await voice.move_to(channel)
+    else:
+        voice = await channel.connect()
+
+    await voice.disconnect()
+
+    if voice and voice.is_connected():
+        await voice.move_to(channel)
+    else:
+        voice = await channel.connect()
+        print(f"The bot has connected to {channel}\n")
+
+    voice.play(discord.FFmpegPCMAudio("sound.mp3"))
+    voice.source = discord.PCMVolumeTransformer(voice.source)
+    voice.source.volume = 0.07
+
+
+@client.command()
+async def avondlied(ctx): # laat de bot het voice channel joinen
+    await ctx.send("O Heer, d'avond is neergekomen,\nde zonne zonk, het duister klom.\nDe winden doorruisen de bomen\nen verre sterren staan alom...\nWij knielen neer om u te zingen \nin 't slapend woud ons avondlied.\nWij danken u voor wat we ontvingen,\nen vragen, heer, verlaat ons niet!\nKnielen, knielen, knielen wij neder,\ndoor de stilte weerklinkt onze beê\nLuist'rend fluist'ren kruinen mee\nen sterren staren teder.\nGeef ons Heer, zegen en rust en vreê.\n bron:https://www.scoutsengidsenvlaanderen.be/rituelen/avondlied")
+    global voice
+    channel = ctx.message.author.voice.channel
+    voice = get(client.voice_clients, guild=ctx.guild)
+
+    if voice and voice.is_connected():
+        await voice.move_to(channel)
+    else:
+        voice = await channel.connect()
+
+    await voice.disconnect()
+
+    if voice and voice.is_connected():
+        await voice.move_to(channel)
+    else:
+        voice = await channel.connect()
+        print(f"The bot has connected to {channel}\n")
+
+    voice.play(discord.FFmpegPCMAudio("Avondliedje.mp3"))
+    voice.source = discord.PCMVolumeTransformer(voice.source)
+
+    voice.source.volume = 0.07
+
+@client.command(pass_context=True,aliases=['mijntotemsynoniemvoor', "synoniemvoor", "synoniem"])
+async def totemsynoniemvoor(ctx,*,totem):
+    if totem == "BOT" or totem == "Totembot" or totem == "admin" or totem == "Totembot 2":
+        await ctx.send("nice try om de role van bot te krijgen en hiermee on de admin rights")
+        return None
+    user = ctx.message.author
+    totem = totem.lower()
+    guild = ctx.guild
+    dietotemiseral = False
+    lijst_lijst_van_al_de_totems = []
+    for m in guild.members:
+        # print(guild.members)
+        # print(ctx.guild.members)
+        for member_role in m.roles:
+            if member_role.name == totem:
+                print(m)
+                await m.send(user.name + " heeft dezelfde totem als jouw en heeft de totem server gejoind, ga gedag zeggen")
+                lijst_lijst_van_al_de_totems.append(member_role)
+                dietotemiseral = True
+    if dietotemiseral:
+        for role_man in lijst_lijst_van_al_de_totems:
+            await user.add_roles(role_man)
+            role = role_man
+
+    else:
+        await guild.create_role(name=totem)
+        role = discord.utils.get(ctx.guild.roles, name=totem)
+
+        await user.add_roles(role)
+
+
+    for m in guild.members:
+        # print(guild.members)
+        # print(ctx.guild.members)
+        for member_role in m.roles:
+            if member_role.name == totem:
+                if m.name != user.name:
+                    await ctx.send(m.name + " heeft ook die totem, zeg hem\haar eens gedag!\n (gebruik de zoekbalk rechtsboven\n of via jouw totem chat die links boven staat )")
+                    erzijnaltotems = True
+
+    guild = client.get_guild(ctx.guild.id)
+    erzijnaltotems = False
+    if erzijnaltotems == False:
+        await ctx.send("er is nog niemand buiten jij met deze totem in de server, misschien joinen er mensen later met jouw  totem\n maar je krijgt een melding als iemand met jouw totem joint")
+
+@client.command()
+async def plot(ctx): # plot al de vorige elos  zo dat je een grafiek krijgt
+
+
+    dietotemiseral = False
+    lijst_lijst_van_al_de_totems = []
+    dictionary = {}
+
+    for m in ctx.guild.members:
+        # print(guild.members)
+        # print(ctx.guild.members)
+        for member_role in m.roles:
+            if member_role.name != "@everyone":
+                dictionary[member_role.name] = dictionary.get(member_role.name,0) + 1
+
+    newA = dict(sorted(dictionary.iteritems(), key=operator.itemgetter(1), reverse=True)[:5])
+
+    #plt.bar(list(dic_2.keys()), dic_2.values(), color='g')
+    #plt.xticks(rotation='vertical')
+
+    #plt.show()
+    #plt.savefig("elo.png")
+    #plt.close()
+    #await ctx.send(file=discord.File('elo.png'))
+
+
+@client.command(pass_context=True,aliases=['w', 'wik'] )
+async def wiki(ctx,*, vraag):
+    wikipedia.set_lang("nl")
+    try:
+        ny = wikipedia.page(vraag)
+        await ctx.send(wikipedia.summary(vraag,sentences=5))
+        await ctx.send("bron:" + ny.url)
+    except:
+        await ctx.send("u heeft keuze uit" + str(wikipedia.search(vraag)))
+
+
+
+@client.command()
+async def eigenschappen(ctx, totem): # geeft de totem van iemand weer
+    source = urllib.request.urlopen("https://www.scoutsengidsenvlaanderen"
+                                    ""
+                                    ".be/totem/" + totem)
+
+    soup = bs.BeautifulSoup(source, 'lxml')
+    print(soup)
+    alle_lists = soup.find_all("li")
+    print("hier")
+    #print(alle_lists)
+    s = soup
+    pattern = "<span>\(.*?)\</span></li>"
+    substring = re.search(pattern, s).group(1)
+    print("dit is het")
+    print(substring)
+    alles = s.split("\n")
+    for html_zin in alles:
+        start = html_zin.find("<span>") + len("<span>")
+        end = html_zin.find("</span></li>")
+        substring = html_zin[start:end]
+        print(substring)
+
+    badges = soup.body.find('div', attrs={'class': 'badges'})
+    for span in badges.span.find_all('span', recursive=False):
+        await ctx.send(span.attrs['title'])
+
+    await ctx.send("bron:" + "https://www.scoutsengidsenvlaanderen.be/totem/" + totem)
+
+    try:
+        source = urllib.request.urlopen("https://www.scoutsengidsenvlaanderen"
+                                        ""
+                                        ".be/totem/"+ totem )
+
+        soup = bs.BeautifulSoup(source, 'lxml')
+        print(soup)
+        badges = soup.body.find('div', attrs={'class': 'badges'})
+        print(badges.span.find_all('span', recursive=False))
+        for span in badges.span.find_all('span', recursive=False):
+            await ctx.send(span.attrs['title'])
+
+        await ctx.send("bron:"+ "https://www.scoutsengidsenvlaanderen.be/totem/"+ totem  )
+    except:
+        await ctx.send(
+            "u heeft de totem fout geschreven, of de totem staat niet op https://www.scoutsengidsenvlaanderen.be/totem/ ")
+
+
+lijstgouw = ["Zuid-West Vlaanderen","Noordzee", "Waas"," Land van Egmont", "Gent", "Limburg", "Opsinjoor", "Heide",  "Antwerpen","Limburg", "Webra","Oost-Brabant" ]
+lijst_kleineletters = []
+dic_role_id ={"Gouw Waas":783328664347475969,"Gouw Land van Egmont":783328439628595200, "Gouw Opsinjoor":783328435543080990, "Gouw Limburg":783328431647227904,"Gouw Webra":783328154353139712 , "Gouw Oost-Brabant":783328102444040263,"Gouw Kempen": 783328013378519051, "Gouw Heide":783327865672302622, "Gouw Antwerpen": 783327705235193976, "Gouw Noordzee" :783326841065701396,"Gouw Gent":783329022410227732, "Gouw Zuid-West Vlaanderen":783328422600245258
+ }
+@client.command(pass_context=True)
+async def gouw(ctx,*,gouw):
+    for woord in lijstgouw:
+        lijst_kleineletters.append(woord.lower())
+
+    gouw = gouw.lower()
+    gouwen  = ctx.guild.roles
+    user = ctx.message.author
+    print(gouwen)
+    gouwgevonden = False
+    guild = ctx.guild
+    for sleutel in dic_role_id:
+        stringsleutel = str(sleutel)
+        stringsleutel = stringsleutel.split(" ")
+        stringsleutel = stringsleutel[1:]
+        stringsleutel = " ".join(stringsleutel).lower()
+        #print(gouw)
+        if str(gouw) in stringsleutel: #zonder het woord gouw
+            role_gouw = get(guild.roles, id=dic_role_id[sleutel])
+            await user.add_roles(role_gouw)
+            await ctx.send("u kunt nu in de " + role_gouw.name +" chat")
+            gouwgevonden = True
+    if not gouwgevonden:
+        gouw = gouw.lower
+        string_lijst_allegouw = ""
+        for  gouwtje in lijstgouw:
+            string_lijst_allegouw += "\n" + "gouw " +gouwtje
+
+        await ctx.send("Jouw gouw staat niet in de lijst: " + string_lijst_allegouw)
+
+
+dic_rol_aantal = {}
+@client.command(pass_context=True)
+async def top(ctx):
+    server = ctx.guild
+    for member in server.members:
+        for role in member.roles:
+            dic_rol_aantal[role.name] = dic_rol_aantal.get(role.name,0) + 1
+
+    newA = dict(sorted(dic_rol_aantal.items(), key=operator.itemgetter(1), reverse=True)[:40])
+    print(dic_rol_aantal)
+    string = ""
+    nr = 0
+    while nr < 10:
+        for woord in newA:
+
+
+            if "everyone" in woord or "Gouw" in woord or "niet" in woord:
+                fiets = 0
+                print(woord)
+
+
+            else:
+                string += woord + ":"+ str(dic_rol_aantal[woord]) + "\n"
+
+                nr += 1
+
+
+    await ctx.send(string)
+
+
+
+
+client.run(hier dan de toteken)
